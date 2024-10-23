@@ -14,7 +14,7 @@ class Task {
     return Task(
       title: json['title'],
       isDone: json['isDone'],
-      id: 0,
+      id: DateTime.now().millisecondsSinceEpoch,
     );
   }
 }

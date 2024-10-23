@@ -47,6 +47,20 @@ class _ToDoListPageState extends State<ToDoListPage> {
     }
   }
 
+  void _sortByStatus() {
+    setState(() {
+      _tasks.sort((a, b) {
+        if (a.isDone && !b.isDone) {
+          return 1; // Task yang sudah selesai di bawah
+        } else if (!a.isDone && b.isDone) {
+          return -1; // Task yang belum selesai di atas
+        } else {
+          return 0; // Tetap di posisi yang sama
+        }
+      });
+    });
+  }
+
   // Fungsi untuk mengedit task
   void _editTask(int index) {
     TextEditingController editController =
@@ -109,6 +123,12 @@ class _ToDoListPageState extends State<ToDoListPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('To Do List'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sort),
+            onPressed: _sortByStatus,
+          )
+        ],
       ),
       body: Column(
         children: [
@@ -137,7 +157,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('filter:'),
+                const Text('filter:'),
                 DropdownButton<String>(
                   value: _filter,
                   items: const [
@@ -156,7 +176,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
                   ],
                   onChanged: (value) {
                     setState(() {
-                      _filter = value!;
+                      _filter = value!; // Update Filter Sesuai Pilihan
                     });
                   },
                 ),
@@ -165,9 +185,12 @@ class _ToDoListPageState extends State<ToDoListPage> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _tasks.length,
+              itemCount: filteredTasks.length,
               itemBuilder: (context, index) {
-                final task = _tasks[index];
+                if (index >= filteredTasks.length)
+                  return const SizedBox
+                      .shrink(); // Mencegah akses index di luar range
+                final task = filteredTasks[index];
                 return Padding(
                   padding: const EdgeInsets.symmetric(
                       vertical: 5.0), // Tambahin jarak vertikal
