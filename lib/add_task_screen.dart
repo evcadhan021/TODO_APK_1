@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import './model/task.dart';
+import 'task.dart';
 
 class AddTaskScreen extends StatelessWidget {
   final Function(String, int?) onAddTask; // Parameter untuk edit
