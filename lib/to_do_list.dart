@@ -9,6 +9,7 @@ class ToDoListPage extends StatefulWidget {
 
 class _ToDoListPageState extends State<ToDoListPage> {
   List<Task> _tasks = [];
+  String _filter = 'All'; // Default filter adalah 'All'
   final TextEditingController _taskController = TextEditingController();
 
   @override
@@ -37,7 +38,6 @@ class _ToDoListPageState extends State<ToDoListPage> {
         _tasks.add(Task(
           id: DateTime.now()
               .millisecondsSinceEpoch, // ID unik sebagai int berdasarkan waktu
-
           title: _taskController.text, // Judul task dari inputan user
           isDone: false, // Default task baru belum selesai (false)
         ));
@@ -56,17 +56,17 @@ class _ToDoListPageState extends State<ToDoListPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Task'),
+          title: const Text('Edit Task'),
           content: TextField(
             controller: editController,
-            decoration: InputDecoration(labelText: 'Task Name'),
+            decoration: const InputDecoration(labelText: 'Task Name'),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
@@ -76,7 +76,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
                 _saveTasks(); // Simpan task setelah diedit
                 Navigator.of(context).pop();
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -84,11 +84,31 @@ class _ToDoListPageState extends State<ToDoListPage> {
     );
   }
 
+  // fungsi untuk menghapus task (tugas)
+  void _deleteTask(int index) {
+    setState(() {
+      _tasks.removeAt(index); // Hapus task dari list
+    });
+    _saveTasks(); // Simpan setelah task dihapus
+  }
+
+  // Fungsi untuk filter task
+  List<Task> _getFilteredTasks() {
+    if (_filter == 'Completed') {
+      return _tasks.where((task) => task.isDone).toList();
+    } else if (_filter == 'Incomplete') {
+      return _tasks.where((task) => !task.isDone).toList();
+    }
+    return _tasks; // Default : Tampilkan semua task
+  }
+
   @override
   Widget build(BuildContext context) {
+    List<Task> filteredTasks =
+        _getFilteredTasks(); // Ambil task yang sudah difilter
     return Scaffold(
       appBar: AppBar(
-        title: Text('To Do List'),
+        title: const Text('To Do List'),
       ),
       body: Column(
         children: [
@@ -99,12 +119,46 @@ class _ToDoListPageState extends State<ToDoListPage> {
                 Expanded(
                   child: TextField(
                     controller: _taskController,
-                    decoration: InputDecoration(labelText: 'Enter Task'),
+                    decoration: const InputDecoration(labelText: 'Enter Task'),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.add),
+                  icon: const Icon(
+                    Icons.add_comment_rounded,
+                    size: 40,
+                  ),
                   onPressed: _addTask, // Tambah task baru saat tombol ditekan
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('filter:'),
+                DropdownButton<String>(
+                  value: _filter,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'All',
+                      child: Text('All'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Completed',
+                      child: Text('Completed'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Incomplete',
+                      child: Text('Incomplete'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _filter = value!;
+                    });
+                  },
                 ),
               ],
             ),
@@ -114,25 +168,47 @@ class _ToDoListPageState extends State<ToDoListPage> {
               itemCount: _tasks.length,
               itemBuilder: (context, index) {
                 final task = _tasks[index];
-                return ListTile(
-                  title: Text(task.title),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Checkbox(
-                        value: task.isDone,
-                        onChanged: (value) {
-                          setState(() {
-                            task.isDone = value ?? false;
-                          });
-                          _saveTasks(); // Simpan task saat status berubah
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () => _editTask(index), // Panggil edit task
-                      ),
-                    ],
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 5.0), // Tambahin jarak vertikal
+                  child: ListTile(
+                    textColor: Colors.green,
+                    tileColor: Colors.black,
+                    title: Text(
+                      task.title,
+                      style: const TextStyle(
+                          fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          value: task.isDone,
+                          onChanged: (value) {
+                            setState(() {
+                              task.isDone = value ?? false;
+                            });
+                            _saveTasks(); // Simpan task saat status berubah
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.edit,
+                            color: Colors.blue,
+                          ),
+                          onPressed: () =>
+                              _editTask(index), // Panggil edit task
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                          ),
+                          onPressed: () =>
+                              _deleteTask(index), // Panggil delete task
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
