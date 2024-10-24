@@ -237,23 +237,54 @@ class _ToDoListPageState extends State<ToDoListPage> {
               ];
             },
           ),
+          DropdownButton<String>(
+            value: _filter, // Variabel buat simpan nilai filter
+            onChanged: (String? newValue) {
+              setState(() {
+                _filter = newValue!;
+                // Logika filter task berdasarkan status
+              });
+            },
+            items: <String>['All', 'Completed', 'Incomplete']
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
         ],
       ),
+
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
             child: TextField(
+              textCapitalization: TextCapitalization.sentences,
               controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: 'Seacrh Task',
-                prefixIcon: Icon(Icons.search),
-              ),
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
                 });
               },
+              decoration: const InputDecoration(
+                icon: Icon(Icons.search),
+                hintText: "Search Task",
+                border: InputBorder.none,
+              ),
             ),
           ),
           Expanded(
@@ -261,121 +292,57 @@ class _ToDoListPageState extends State<ToDoListPage> {
               itemCount: _getSearchResults().length,
               itemBuilder: (context, index) {
                 final task = _getSearchResults()[index];
-                return ListTile(
+                return ExpansionTile(
                   title: Text(task.title),
-                  // lanjutkan dengan kode task yang ada
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Checkbox(
+                            value: task.isDone,
+                            onChanged: (value) {
+                              setState(() {
+                                task.isDone = value ?? false;
+                              });
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () =>
+                                _editTask(index), // Panggil edit task
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () =>
+                                _deleteTask(index), // Panggil delete task
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _taskController,
-                    decoration: const InputDecoration(labelText: 'Enter Task'),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.add_comment_rounded,
-                    size: 40,
-                  ),
-                  onPressed: _addTask, // Tambah task baru saat tombol ditekan
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('filter:'),
-                DropdownButton<String>(
-                  value: _filter,
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'All',
-                      child: Text('All'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Completed',
-                      child: Text('Completed'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Incomplete',
-                      child: Text('Incomplete'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _filter = value!; // Update Filter Sesuai Pilihan
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: filteredTasks.length,
-              itemBuilder: (context, index) {
-                if (index >= filteredTasks.length) {
-                  return const SizedBox
-                      .shrink(); // Mencegah akses index di luar range
-                }
-                final task = filteredTasks[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 5.0), // Tambahin jarak vertikal
-                  child: ListTile(
-                    textColor: Colors.green,
-                    tileColor: Colors.black,
-                    title: Text(
-                      task.title,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Checkbox(
-                          value: task.isDone,
-                          onChanged: (value) {
-                            setState(() {
-                              task.isDone = value ?? false;
-                            });
-                            _saveTasks(); // Simpan task saat status berubah
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.edit,
-                            color: Colors.blue,
-                          ),
-                          onPressed: () =>
-                              _editTask(index), // Panggil edit task
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete,
-                            color: Colors.red,
-                          ),
-                          onPressed: () =>
-                              _deleteTask(index), // Panggil delete task
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+            child: TextField(
+              controller: _taskController,
+              decoration: const InputDecoration(labelText: 'Enter Task'),
+              textCapitalization: TextCapitalization.sentences,
             ),
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addTask,
+        backgroundColor: Colors.amberAccent,
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation
+          .endFloat, // Posisinya di pojok kanan bawah
     );
   }
 }
