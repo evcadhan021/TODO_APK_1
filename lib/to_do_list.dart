@@ -12,6 +12,21 @@ class _ToDoListPageState extends State<ToDoListPage> {
   String _filter = 'All'; // Default filter adalah 'All'
   final TextEditingController _taskController = TextEditingController();
 
+  // Controll untuk pencarian keyword task
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  // Fungsi untuk task berdasarkan pencarian
+  List<Task> _getSearchResults() {
+    if (_searchQuery.isEmpty) {
+      return _getFilteredTasks(); // Tampilkan task sesuai filter status kalau gak ada pencarian
+    } else {
+      return _getFilteredTasks().where((task) {
+        return task.title.toLowerCase().contains(_searchQuery.toLowerCase());
+      }).toList();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +55,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
               .millisecondsSinceEpoch, // ID unik sebagai int berdasarkan waktu
           title: _taskController.text, // Judul task dari inputan user
           isDone: false, // Default task baru belum selesai (false)
+          createdDate: DateTime.now().microsecondsSinceEpoch,
         ));
         _taskController.clear(); // Hapus teks di form
       });
@@ -47,6 +63,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
     }
   }
 
+  // Fungsi untuk men-sorting berdasarkan Status
   void _sortByStatus() {
     setState(() {
       _tasks.sort((a, b) {
@@ -61,7 +78,21 @@ class _ToDoListPageState extends State<ToDoListPage> {
     });
   }
 
-  // Fungsi untuk mengedit task
+  // Fungsi untuk men-sorting berdasarkan Tanggal
+  void _sortByDate() {
+    setState(() {
+      _tasks.sort((a, b) => a.createdDate.compareTo(b.createdDate));
+    });
+  }
+
+  // Fungsi untuk men-sorting berdasarkan Abjad
+  void _sortByTitle() {
+    setState(() {
+      _tasks.sort((a, b) => a.title.compareTo(b.title));
+    });
+  }
+
+  // Fungsi untuk mengedit task // disini ada ShowDialog
   void _editTask(int index) {
     TextEditingController editController =
         TextEditingController(text: _tasks[index].title);
@@ -100,10 +131,33 @@ class _ToDoListPageState extends State<ToDoListPage> {
 
   // fungsi untuk menghapus task (tugas)
   void _deleteTask(int index) {
+    // Simpan task yang dihapus sementara
+    Task deletedTask = _tasks[index];
+    int deletedIndex = index;
+
+    // Hapus task dari list
     setState(() {
       _tasks.removeAt(index); // Hapus task dari list
     });
+
     _saveTasks(); // Simpan setelah task dihapus
+
+    // Munculkan snackbar dengan opsi undo
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Task "${deletedTask.title}" deleted'),
+        action: SnackBarAction(
+          label: 'undo',
+          onPressed: () {
+            // Tambahkan task yang dihapus kembali ke list
+            setState(() {
+              _tasks.insert(deletedIndex, deletedTask);
+            });
+            _saveTasks(); // Simpan task setelah undo
+          },
+        ),
+      ),
+    );
   }
 
   // Fungsi untuk filter task
@@ -116,22 +170,104 @@ class _ToDoListPageState extends State<ToDoListPage> {
     return _tasks; // Default : Tampilkan semua task
   }
 
+  // Fungsi untuk mark semua task sebagai selesai
+  void _markAllAsCompleted() {
+    setState(() {
+      for (var task in _tasks) {
+        task.isDone = true; // Tandai semua task sebagai selesai
+      }
+    });
+    _saveTasks();
+  }
+
+  // Fungsi untuk mark semua task sebagai belum selesai
+  void _markAllAsIncomplete() {
+    setState(() {
+      for (var task in _tasks) {
+        task.isDone = false; // tandai semua mark sebagai belum selesai
+      }
+    });
+    _saveTasks();
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Task> filteredTasks =
         _getFilteredTasks(); // Ambil task yang sudah difilter
     return Scaffold(
       appBar: AppBar(
-        title: const Text('To Do List'),
+        title: const Text('To-Do List'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.sort),
-            onPressed: _sortByStatus,
-          )
+            onPressed:
+                _markAllAsCompleted, // Fungsi untuk mark semua task selesai
+            icon: const Icon(Icons.done_all),
+            tooltip: 'Mark All as Completed',
+          ),
+          IconButton(
+            onPressed:
+                _markAllAsIncomplete, // Fungsi untuk mark semua task belum selesai
+            icon: const Icon(Icons.undo),
+            tooltip: 'Mark All as Incompleted',
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'status') {
+                _sortByStatus();
+              } else if (value == 'date') {
+                _sortByDate();
+              } else if (value == 'title') {
+                _sortByTitle();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem(
+                  value: 'status',
+                  child: Text('Sort by Status'),
+                ),
+                const PopupMenuItem(
+                  value: 'date',
+                  child: Text('Sort by Date'),
+                ),
+                const PopupMenuItem(
+                  value: 'title',
+                  child: Text('Sort by Title'),
+                ),
+              ];
+            },
+          ),
         ],
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                labelText: 'Seacrh Task',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _getSearchResults().length,
+              itemBuilder: (context, index) {
+                final task = _getSearchResults()[index];
+                return ListTile(
+                  title: Text(task.title),
+                  // lanjutkan dengan kode task yang ada
+                );
+              },
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -187,9 +323,10 @@ class _ToDoListPageState extends State<ToDoListPage> {
             child: ListView.builder(
               itemCount: filteredTasks.length,
               itemBuilder: (context, index) {
-                if (index >= filteredTasks.length)
+                if (index >= filteredTasks.length) {
                   return const SizedBox
                       .shrink(); // Mencegah akses index di luar range
+                }
                 final task = filteredTasks[index];
                 return Padding(
                   padding: const EdgeInsets.symmetric(
