@@ -196,18 +196,34 @@ class _ToDoListPageState extends State<ToDoListPage> {
         _getFilteredTasks(); // Ambil task yang sudah difilter
     return Scaffold(
       appBar: AppBar(
-        title: const Text('To-Do List'),
+        backgroundColor: Colors.amber,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                  colors: [Color(0xFF5D69DE), Color(0xFFC89FEB)])),
+        ),
+        title: const Text(
+          'Notes',
+          style: TextStyle(color: Colors.white),
+        ),
         actions: [
           IconButton(
+            icon: const Icon(
+              Icons.done_all,
+              color: Colors.white,
+            ),
             onPressed:
                 _markAllAsCompleted, // Fungsi untuk mark semua task selesai
-            icon: const Icon(Icons.done_all),
             tooltip: 'Mark All as Completed',
           ),
           IconButton(
             onPressed:
                 _markAllAsIncomplete, // Fungsi untuk mark semua task belum selesai
-            icon: const Icon(Icons.undo),
+            icon: const Icon(
+              Icons.undo,
+              color: Colors.white,
+            ),
             tooltip: 'Mark All as Incompleted',
           ),
           PopupMenuButton<String>(
@@ -289,11 +305,15 @@ class _ToDoListPageState extends State<ToDoListPage> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _getSearchResults().length,
+              itemCount: filteredTasks.length,
               itemBuilder: (context, index) {
-                final task = _getSearchResults()[index];
+                final task = filteredTasks[index];
                 return ExpansionTile(
-                  title: Text(task.title),
+                  title: Text(
+                    task.title,
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -309,12 +329,18 @@ class _ToDoListPageState extends State<ToDoListPage> {
                             },
                           ),
                           IconButton(
-                            icon: const Icon(Icons.edit),
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.blue,
+                            ),
                             onPressed: () =>
                                 _editTask(index), // Panggil edit task
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete),
+                            icon: const Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                            ),
                             onPressed: () =>
                                 _deleteTask(index), // Panggil delete task
                           ),
@@ -338,8 +364,11 @@ class _ToDoListPageState extends State<ToDoListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addTask,
-        backgroundColor: Colors.amberAccent,
-        child: const Icon(Icons.add),
+        backgroundColor: const Color(0xFF5D69DE),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation
           .endFloat, // Posisinya di pojok kanan bawah
